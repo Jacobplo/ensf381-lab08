@@ -97,12 +97,13 @@ def userEndpoint():
 
     if request.method == 'POST':
         new_user = request.get_json()
-
+        if new_user['id'] == '':
+            return jsonify({"message": "User cannot be empty"}), 409
         if not new_user or 'id' not in new_user:
-            return jsonify({"error": "Invalid input"}), 400
+            return jsonify({"message": "Invalid input"}), 400
 
         if new_user['id'] in users:
-            return jsonify({"error": "User already exists"}), 409
+            return jsonify({"message": "User already exists"}), 409
 
         users[new_user['id']] = new_user
         return jsonify(list(users.values())), 201
@@ -114,10 +115,10 @@ def userByIdEndpoint(user_id):
         updated_user = request.get_json()
 
         if not updated_user:
-            return jsonify({"error": "Invalid input"}), 400
+            return jsonify({"message": "Invalid input"}), 400
 
         if user_id not in users:
-            return jsonify({"error": "User not found"}), 404
+            return jsonify({"message": "User not found"}), 404
 
         users[user_id] = updated_user
         users[user_id]["id"] = user_id
@@ -125,7 +126,7 @@ def userByIdEndpoint(user_id):
 
     if request.method == 'DELETE':
         if user_id not in users:
-            return jsonify({"error": "User not found"}), 404
+            return jsonify({"message": "User not found"}), 404
 
         del users[user_id]
         return jsonify({"message": "User deleted"}), 200
