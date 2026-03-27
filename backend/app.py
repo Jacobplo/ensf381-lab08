@@ -59,5 +59,27 @@ users = deepcopy(SEEDED_USERS)
 # - POST /predict_house_price
 
 
+@app.route("/predict_house_price", methods=["POST"])
+def predict_house_price():
+  model = joblib.load(MODEL_PATH)
+  
+  data = request.json
+
+  sample_data = [ data['city'], data['province'], float(data['latitude']),
+                 float(data['longitude']), data['lease_term'], data['type'],
+                 float(data['beds']), float(data['baths']),
+                 float(data['sq_feet']), data['furnishing'], data['smoking'],
+                 bool(data['pets']), bool(data['pets']), ]
+
+  sample_df = pd.DataFrame([sample_data], columns=[ 
+      'city', 'province', 'latitude', 'longitude', 'lease_term', 
+      'type', 'beds', 'baths', 'sq_feet', 'furnishing', 
+      'smoking', 'cats', 'dogs' 
+  ])
+
+  predicted_price = float(model.predict(sample_df))
+
+  return jsonify({"predicted_price": predicted_price}), 200
+
 if __name__ == "__main__":
     app.run(debug=True, port=5050)
