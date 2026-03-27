@@ -39,22 +39,45 @@ CORS(app)
 users = deepcopy(SEEDED_USERS)
 
 
-# TODO: Define these Flask routes with @app.route():
-# - GET /users
-#   Return 200 on success. The frontend still expects a JSON array,
-#   so return list(users.values()) instead of the dict directly.
-# - POST /users
-#   Return 201 for a successful create, 400 for invalid input,
-#   and 409 if the id already exists. Since users is a dict keyed by
-#   id, use the id as the lookup key when checking for duplicates.
-# - PUT /users/<user_id>
-#   Return 200 for a successful update, 400 for invalid input,
-#   and 404 if the user does not exist. Update the matching record
-#   with users[user_id] = {...} after confirming the key exists.
-# - DELETE /users/<user_id>
-#   Return 200 for a successful delete and 404 if the user does not
-#   exist. Delete with del users[user_id] after confirming the key
-#   exists.
+@app.route('/users', methods=['GET', 'POST'])
+def userEndpoint():
+    if request.method == 'GET':
+        return jsonify(list(users.values())), 200
+
+    if request.method == 'POST':
+        new_user = request.get_json()
+
+        if not new_user or 'id' not in new_user:
+            return jsonify({"error": "Invalid input"}), 400
+
+        if new_user['id'] in users:
+            return jsonify({"error": "User already exists"}), 409
+
+        users[new_user['id']] = new_user
+        return jsonify(list(users.values())), 201
+
+
+@app.route('/users/<user_id>', methods=['PUT', 'DELETE'])
+def userByIdEndpoint(user_id):
+    if request.method == 'PUT':
+        updated_user = request.get_json()
+
+        if not updated_user:
+            return jsonify({"error": "Invalid input"}), 400
+
+        if user_id not in users:
+            return jsonify({"error": "User not found"}), 404
+
+        users[user_id] = updated_user
+        users[user_id]["id"] = user_id
+        return jsonify(users[user_id]), 200
+
+    if request.method == 'DELETE':
+        if user_id not in users:
+            return jsonify({"error": "User not found"}), 404
+
+        del users[user_id]
+        return jsonify({"message": "User deleted"}), 200
 #   Exercise2
 # - POST /predict_house_price
 
@@ -77,7 +100,7 @@ def predict_house_price():
       'smoking', 'cats', 'dogs' 
   ])
 
-  predicted_price = float(model.predict(sample_df))
+  predicted_price = (model.predict(sample_df))
 
   return jsonify({"predicted_price": predicted_price}), 200
 
