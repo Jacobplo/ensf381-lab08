@@ -31,6 +31,57 @@ PREDICTION_COLUMNS = [
     "dogs",
 ]
 
+PROVINCES = [
+  'Alberta',
+  'British Columbia',
+  'Manitoba',
+  'New Brunswick',
+  'Newfoundland and Labrador',
+  'Northwest Territories',
+  'Nova Scotia',
+  'Ontario',
+  'Quebec',
+  'Saskatchewan',
+]
+
+LEASE_TERMS = [
+  '12 months',
+  '6 months',
+  'Long Term',
+  'Negotiable',
+  'Short Term',
+  'months',
+]
+
+PROPERTY_TYPES = [
+  'Acreage',
+  'Apartment',
+  'Basement',
+  'Condo Unit',
+  'Duplex',
+  'House',
+  'Loft',
+  'Main Floor',
+  'Mobile',
+  'Room For Rent',
+  'Townhouse',
+  'Vacation Home',
+]
+
+FURNISHING_OPTIONS = [
+  'Furnished',
+  'Negotiable',
+  'Unfurnished',
+  'Unfurnished, Negotiable',
+]
+
+SMOKING_OPTIONS = [
+  'Negotiable',
+  'Non-Smoking',
+  'Smoke Free Building',
+  'Smoking Allowed',
+]
+
 app = Flask(__name__)
 # For this lab, allow cross-origin requests from the React dev server.
 # This broad setup keeps local development simple and is not standard
@@ -81,7 +132,6 @@ def userByIdEndpoint(user_id):
 #   Exercise2
 # - POST /predict_house_price
 
-
 @app.route("/predict_house_price", methods=["POST"])
 def predict_house_price():
   model = joblib.load(MODEL_PATH)
@@ -100,7 +150,41 @@ def predict_house_price():
       'smoking', 'cats', 'dogs' 
   ])
 
-  predicted_price = (model.predict(sample_df))
+  if len(sample_df["city"].iloc[0]) == 0:
+    return jsonify({"message": "Must input a city"}), 400
+
+  if sample_df["province"].iloc[0] not in PROVINCES:
+    return jsonify({"message": "Invalid province"}), 400
+
+  if not isinstance(sample_df["longitude"].iloc[0], float):
+    return jsonify({"message": "Longitude must be a number"}), 400
+
+  if not isinstance(sample_df["latitude"].iloc[0], float):
+    return jsonify({"message": "Latitude must be a number"}), 400
+
+  if sample_df["lease_term"].iloc[0] not in LEASE_TERMS:
+    return jsonify({"message": "Invalid lease term"}), 400
+
+  if sample_df["type"].iloc[0] not in PROPERTY_TYPES:
+    return jsonify({"message": "Invalid property type"}), 400
+
+  if sample_df["beds"].iloc[0] < 0:
+    return jsonify({"message": "Beds must be not be negative"}), 400
+
+  if sample_df["baths"].iloc[0] < 0:
+    return jsonify({"message": "Baths must be not be negative"}), 400
+
+  if sample_df["sq_feet"].iloc[0] <= 0:
+    return jsonify({"message": "Square feet must be not be zero"}), 400
+
+  if sample_df["furnishing"].iloc[0] not in FURNISHING_OPTIONS:
+    return jsonify({"message": "Invalid furnishing option"}), 400
+
+  if sample_df["smoking"].iloc[0] not in SMOKING_OPTIONS:
+    return jsonify({"message": "Invalid smoking option"}), 400
+
+
+  predicted_price = model.predict(sample_df)[0]
 
   return jsonify({"predicted_price": predicted_price}), 200
 
